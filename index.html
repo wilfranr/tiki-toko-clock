@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Digital</title>
+    <!-- Incluimos Tailwind CSS desde un CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Pequeño estilo adicional para una fuente de reloj más bonita */
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap");
+      .font-orbitron {
+        font-family: "Orbitron", sans-serif;
+      }
+    </style>
+    <link rel="manifest" href="manifest.json">
+  </head>
+
+  <body
+    class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4"
+  >
+    <main class="w-full max-w-md mx-auto flex flex-col space-y-6">
+      <!-- 1. Sección del Reloj y la Fecha -->
+      <section class="bg-gray-800 p-6 rounded-xl shadow-lg text-center">
+        <div
+          id="time"
+          class="font-orbitron text-5xl md:text-6xl font-bold tracking-widest"
+        >
+          00:00:00
+        </div>
+        <div id="date" class="text-lg md:text-xl text-gray-400 mt-2">
+          cargando fecha...
+        </div>
+      </section>
+
+      <!-- 2. Sección del Clima -->
+      <section
+        id="weather-container"
+        class="bg-gray-800 p-6 rounded-xl shadow-lg flex items-center justify-center space-x-4"
+      >
+        <div id="weather-icon" class="text-4xl"></div>
+        <div>
+          <div id="temperature" class="text-2xl font-bold">--°C</div>
+          <div id="weather-description" class="text-gray-400">
+            Obteniendo clima...
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Sección de Eventos del Calendario -->
+      <section class="bg-gray-800 p-6 rounded-xl shadow-lg">
+        <h2 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">
+          Eventos para Hoy
+        </h2>
+        <ul id="event-list" class="space-y-3">
+          <!-- Los eventos se insertarán aquí con JavaScript -->
+          <li class="text-gray-500">Cargando eventos...</li>
+        </ul>
+      </section>
+    </main>
+
+    <script>
+      // --- CONFIGURACIÓN ---
+      // Eventos de ejemplo (simulados)
+      const MOCK_EVENTS = [
+        { date: "2024-05-27", time: "09:00", title: "Reunión de equipo" },
+        { date: "2024-05-27", time: "12:30", title: "Almuerzo con cliente" },
+        { date: "2024-05-28", time: "15:00", title: "Entrega de proyecto" },
+        { date: "2024-05-27", time: "18:00", title: "Ir al gimnasio" },
+      ];
+      // -------------------
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const timeEl = document.getElementById("time");
+        const dateEl = document.getElementById("date");
+        const weatherIconEl = document.getElementById("weather-icon");
+        const tempEl = document.getElementById("temperature");
+        const weatherDescEl = document.getElementById("weather-description");
+        const eventListEl = document.getElementById("event-list");
+
+        // --- 1. FUNCIÓN PARA EL RELOJ Y LA FECHA ---
+        function updateTimeAndDate() {
+          const now = new Date();
+          const hours = String(now.getHours()).padStart(2, "0");
+          const minutes = String(now.getMinutes()).padStart(2, "0");
+          const seconds = String(now.getSeconds()).padStart(2, "0");
+          timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+
+          const dateOptions = {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          };
+          dateEl.textContent = now.toLocaleDateString("es-ES", dateOptions);
+        }
+
+        // --- FUNCIÓN AUXILIAR PARA INTERPRETAR CÓDIGOS DE CLIMA (WMO) ---
+        function getWeatherInfoFromCode(code) {
+          const weatherMap = {
+            0: { description: "Despejado", icon: "☀️" },
+            1: { description: "Mayormente despejado", icon: "🌤️" },
+            2: { description: "Parcialmente nublado", icon: "⛅" },
+            3: { description: "Nublado", icon: "☁️" },
+            45: { description: "Niebla", icon: "🌫️" },
+            48: { description: "Niebla con escarcha", icon: "🌫️❄️" },
+            51: { description: "Llovizna ligera", icon: "🌦️" },
+            53: { description: "Llovizna moderada", icon: "🌦️" },
+            55: { description: "Llovizna densa", icon: "🌦️" },
+            61: { description: "Lluvia ligera", icon: "🌧️" },
+            63: { description: "Lluvia moderada", icon: "🌧️" },
+            65: { description: "Lluvia fuerte", icon: "🌧️" },
+            71: { description: "Nieve ligera", icon: "❄️" },
+            73: { description: "Nieve moderada", icon: "❄️" },
+            75: { description: "Nieve fuerte", icon: "❄️" },
+            80: { description: "Chubascos ligeros", icon: "🌧️" },
+            81: { description: "Chubascos moderados", icon: "🌧️" },
+            82: { description: "Chubascos violentos", icon: "⛈️" },
+            95: { description: "Tormenta eléctrica", icon: "⛈️" },
+            96: { description: "Tormenta con granizo", icon: "⛈️🧊" },
+            99: { description: "Tormenta con granizo", icon: "⛈️🧊" },
+          };
+          return weatherMap[code] || { description: "Desconocido", icon: "❓" };
+        }
+
+        // --- 2. FUNCIÓN PARA EL CLIMA (USANDO OPEN-METEO) ---
+        function getWeather() {
+          navigator.geolocation.getCurrentPosition(
+            // Éxito al obtener ubicación
+            async (position) => {
+              const { latitude, longitude } = position.coords;
+              // URL para Open-Meteo pidiendo temperatura y código de clima actual
+              const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}¤t=temperature_2m,weather_code&timezone=auto`;
+
+              try {
+                const response = await fetch(apiUrl);
+                if (!response.ok)
+                  throw new Error("Respuesta de red no fue exitosa.");
+
+                const data = await response.json();
+
+                const currentTemp = data.current.temperature_2m;
+                const weatherCode = data.current.weather_code;
+
+                const weatherInfo = getWeatherInfoFromCode(weatherCode);
+
+                weatherIconEl.textContent = weatherInfo.icon;
+                tempEl.textContent = `${Math.round(currentTemp)}°C`;
+                weatherDescEl.textContent = weatherInfo.description;
+              } catch (error) {
+                weatherDescEl.textContent = "Error al obtener datos";
+                console.error("Error fetching weather:", error);
+              }
+            },
+            // Error al obtener ubicación
+            (error) => {
+              weatherDescEl.textContent = "Permiso de ubicación denegado";
+              weatherIconEl.textContent = "📍";
+              tempEl.textContent = "";
+              console.error("Geolocation error:", error);
+            },
+          );
+        }
+
+        // --- 3. FUNCIÓN PARA CARGAR EVENTOS ---
+        function loadEvents() {
+          const today = new Date().toISOString().slice(0, 10); // Formato YYYY-MM-DD
+          const todaysEvents = MOCK_EVENTS.filter(
+            (event) => event.date === today,
+          );
+          eventListEl.innerHTML = "";
+          if (todaysEvents.length === 0) {
+            eventListEl.innerHTML =
+              '<li class="text-gray-500">No hay eventos programados para hoy.</li>';
+            return;
+          }
+          todaysEvents.forEach((event) => {
+            const li = document.createElement("li");
+            li.className =
+              "flex justify-between items-center bg-gray-700/50 p-3 rounded-lg";
+            li.innerHTML = `
+                        <span>${event.title}</span>
+                        <span class="font-mono text-sm bg-blue-500/20 text-blue-300 px-2 py-1 rounded">${event.time}</span>
+                    `;
+            eventListEl.appendChild(li);
+          });
+        }
+
+        // --- INICIALIZACIÓN ---
+        updateTimeAndDate();
+        setInterval(updateTimeAndDate, 1000);
+        getWeather();
+        loadEvents();
+      });
+    </script>
+  <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
