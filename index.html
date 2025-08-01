@@ -125,7 +125,7 @@
 
         // --- 2. FUNCIÓN PARA EL CLIMA (USANDO OPEN-METEO) ---
         async function fetchWeather(latitude, longitude, locationName = null) {
-          const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}¤t=temperature_2m,weather_code&timezone=auto`;
+          const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=auto`;
           try {
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error("Respuesta de red no fue exitosa.");
