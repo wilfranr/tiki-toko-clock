@@ -17,18 +17,18 @@
   </head>
 
   <body
-    class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4"
+    class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4"
   >
-    <main class="w-full max-w-md mx-auto flex flex-col space-y-6">
+    <main class="w-full max-w-4xl mx-auto flex flex-col flex-grow space-y-4">
       <!-- 1. Sección del Reloj y la Fecha -->
-      <section class="bg-gray-800 p-6 rounded-xl shadow-lg text-center">
+      <section class="flex-grow bg-gray-800 p-6 rounded-xl shadow-lg text-center flex flex-col justify-center">
         <div
           id="time"
-          class="font-orbitron text-5xl md:text-6xl font-bold tracking-widest"
+          class="font-orbitron text-7xl md:text-8xl lg:text-9xl font-bold tracking-widest"
         >
           00:00:00
         </div>
-        <div id="date" class="text-lg md:text-xl text-gray-400 mt-2">
+        <div id="date" class="text-xl md:text-2xl text-gray-400 mt-4">
           cargando fecha...
         </div>
       </section>
@@ -36,47 +36,26 @@
       <!-- 2. Sección del Clima -->
       <section
         id="weather-container"
-        class="bg-gray-800 p-6 rounded-xl shadow-lg flex items-center justify-center space-x-4"
+        class="bg-gray-800 p-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 text-sm"
       >
-        <div id="weather-icon" class="text-4xl"></div>
+        <div id="weather-icon" class="text-2xl"></div>
         <div>
-          <div id="temperature" class="text-2xl font-bold">--°C</div>
+          <div id="temperature" class="text-lg font-bold">--°C</div>
           <div id="weather-description" class="text-gray-400">
             Obteniendo clima...
           </div>
         </div>
       </section>
 
-      <!-- 3. Sección de Eventos del Calendario -->
-      <section class="bg-gray-800 p-6 rounded-xl shadow-lg">
-        <h2 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">
-          Eventos para Hoy
-        </h2>
-        <ul id="event-list" class="space-y-3">
-          <!-- Los eventos se insertarán aquí con JavaScript -->
-          <li class="text-gray-500">Cargando eventos...</li>
-        </ul>
-      </section>
-    </main>
+      </main>
 
     <script>
-      // --- CONFIGURACIÓN ---
-      // Eventos de ejemplo (simulados)
-      const MOCK_EVENTS = [
-        { date: "2024-05-27", time: "09:00", title: "Reunión de equipo" },
-        { date: "2024-05-27", time: "12:30", title: "Almuerzo con cliente" },
-        { date: "2024-05-28", time: "15:00", title: "Entrega de proyecto" },
-        { date: "2024-05-27", time: "18:00", title: "Ir al gimnasio" },
-      ];
-      // -------------------
-
       document.addEventListener("DOMContentLoaded", () => {
         const timeEl = document.getElementById("time");
         const dateEl = document.getElementById("date");
         const weatherIconEl = document.getElementById("weather-icon");
         const tempEl = document.getElementById("temperature");
         const weatherDescEl = document.getElementById("weather-description");
-        const eventListEl = document.getElementById("event-list");
 
         // --- 1. FUNCIÓN PARA EL RELOJ Y LA FECHA ---
         function updateTimeAndDate() {
@@ -175,35 +154,10 @@
           );
         }
 
-        // --- 3. FUNCIÓN PARA CARGAR EVENTOS ---
-        function loadEvents() {
-          const today = new Date().toISOString().slice(0, 10); // Formato YYYY-MM-DD
-          const todaysEvents = MOCK_EVENTS.filter(
-            (event) => event.date === today,
-          );
-          eventListEl.innerHTML = "";
-          if (todaysEvents.length === 0) {
-            eventListEl.innerHTML =
-              '<li class="text-gray-500">No hay eventos programados para hoy.</li>';
-            return;
-          }
-          todaysEvents.forEach((event) => {
-            const li = document.createElement("li");
-            li.className =
-              "flex justify-between items-center bg-gray-700/50 p-3 rounded-lg";
-            li.innerHTML = `
-                        <span>${event.title}</span>
-                        <span class="font-mono text-sm bg-blue-500/20 text-blue-300 px-2 py-1 rounded">${event.time}</span>
-                    `;
-            eventListEl.appendChild(li);
-          });
-        }
-
         // --- INICIALIZACIÓN ---
         updateTimeAndDate();
         setInterval(updateTimeAndDate, 1000);
         getWeather();
-        loadEvents();
       });
     </script>
   <script>
