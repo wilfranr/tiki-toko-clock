@@ -125,23 +125,25 @@
 
         // --- 2. FUNCIÓN PARA EL CLIMA (USANDO OPEN-METEO) ---
         function getWeather() {
+          const options = {
+            enableHighAccuracy: false, // No necesita GPS, más rápido
+            timeout: 10000, // Tiempo de espera de 10 segundos
+            maximumAge: 0, // No usar una posición cacheada
+          };
+
           navigator.geolocation.getCurrentPosition(
             // Éxito al obtener ubicación
             async (position) => {
               const { latitude, longitude } = position.coords;
-              // URL para Open-Meteo pidiendo temperatura y código de clima actual
               const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}¤t=temperature_2m,weather_code&timezone=auto`;
 
               try {
                 const response = await fetch(apiUrl);
-                if (!response.ok)
-                  throw new Error("Respuesta de red no fue exitosa.");
+                if (!response.ok) throw new Error("Respuesta de red no fue exitosa.");
 
                 const data = await response.json();
-
                 const currentTemp = data.current.temperature_2m;
                 const weatherCode = data.current.weather_code;
-
                 const weatherInfo = getWeatherInfoFromCode(weatherCode);
 
                 weatherIconEl.textContent = weatherInfo.icon;
@@ -154,11 +156,24 @@
             },
             // Error al obtener ubicación
             (error) => {
-              weatherDescEl.textContent = "Permiso de ubicación denegado";
+              let errorMessage = "Error de ubicación desconocido";
+              switch (error.code) {
+                case error.PERMISSION_DENIED:
+                  errorMessage = "Permiso de ubicación denegado.";
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  errorMessage = "La información de ubicación no está disponible.";
+                  break;
+                case error.TIMEOUT:
+                  errorMessage = "La solicitud de ubicación ha caducado.";
+                  break;
+              }
+              weatherDescEl.textContent = errorMessage;
               weatherIconEl.textContent = "📍";
               tempEl.textContent = "";
               console.error("Geolocation error:", error);
             },
+            options // Añadimos las opciones aquí
           );
         }
 
