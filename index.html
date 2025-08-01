@@ -124,56 +124,54 @@
         }
 
         // --- 2. FUNCIÓN PARA EL CLIMA (USANDO OPEN-METEO) ---
+        async function fetchWeather(latitude, longitude, locationName = null) {
+          const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}¤t=temperature_2m,weather_code&timezone=auto`;
+          try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error("Respuesta de red no fue exitosa.");
+
+            const data = await response.json();
+            const currentTemp = data.current.temperature_2m;
+            const weatherCode = data.current.weather_code;
+            const weatherInfo = getWeatherInfoFromCode(weatherCode);
+
+            weatherIconEl.textContent = weatherInfo.icon;
+            tempEl.textContent = `${Math.round(currentTemp)}°C`;
+            // Si se proporciona un nombre de ubicación (como la de por defecto), lo mostramos.
+            weatherDescEl.textContent = locationName ? `${weatherInfo.description} en ${locationName}` : weatherInfo.description;
+
+          } catch (error) {
+            weatherDescEl.textContent = "Error al obtener datos";
+            console.error("Error fetching weather:", error);
+          }
+        }
+
         function getWeather() {
           const options = {
-            enableHighAccuracy: false, // No necesita GPS, más rápido
-            timeout: 10000, // Tiempo de espera de 10 segundos
-            maximumAge: 0, // No usar una posición cacheada
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 0,
+          };
+
+          const defaultLocation = {
+            latitude: 4.583333,
+            longitude: -74.216667,
+            name: "Soacha",
           };
 
           navigator.geolocation.getCurrentPosition(
             // Éxito al obtener ubicación
-            async (position) => {
-              const { latitude, longitude } = position.coords;
-              const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}¤t=temperature_2m,weather_code&timezone=auto`;
-
-              try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error("Respuesta de red no fue exitosa.");
-
-                const data = await response.json();
-                const currentTemp = data.current.temperature_2m;
-                const weatherCode = data.current.weather_code;
-                const weatherInfo = getWeatherInfoFromCode(weatherCode);
-
-                weatherIconEl.textContent = weatherInfo.icon;
-                tempEl.textContent = `${Math.round(currentTemp)}°C`;
-                weatherDescEl.textContent = weatherInfo.description;
-              } catch (error) {
-                weatherDescEl.textContent = "Error al obtener datos";
-                console.error("Error fetching weather:", error);
-              }
+            (position) => {
+              fetchWeather(position.coords.latitude, position.coords.longitude);
             },
             // Error al obtener ubicación
             (error) => {
-              let errorMessage = "Error de ubicación desconocido";
-              switch (error.code) {
-                case error.PERMISSION_DENIED:
-                  errorMessage = "Permiso de ubicación denegado.";
-                  break;
-                case error.POSITION_UNAVAILABLE:
-                  errorMessage = "La información de ubicación no está disponible.";
-                  break;
-                case error.TIMEOUT:
-                  errorMessage = "La solicitud de ubicación ha caducado.";
-                  break;
-              }
-              weatherDescEl.textContent = errorMessage;
-              weatherIconEl.textContent = "📍";
-              tempEl.textContent = "";
               console.error("Geolocation error:", error);
+              // Mostramos un mensaje y luego el clima de la ubicación por defecto.
+              weatherDescEl.textContent = "Usando ubicación por defecto.";
+              fetchWeather(defaultLocation.latitude, defaultLocation.longitude, defaultLocation.name);
             },
-            options // Añadimos las opciones aquí
+            options
           );
         }
 
