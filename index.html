@@ -3,61 +3,259 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Digital</title>
-    <!-- Incluimos Tailwind CSS desde un CDN -->
+    <title>Reloj Digital</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Pequeño estilo adicional para una fuente de reloj más bonita */
-      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap");
+      
       .font-orbitron {
         font-family: "Orbitron", sans-serif;
+      }
+      
+      .font-inter {
+        font-family: "Inter", sans-serif;
+      }
+      
+      /* Variables CSS para colores personalizables */
+      :root {
+        --clock-color: #00ff88;
+        --date-color: #ffffff;
+        --weather-color: #00d4ff;
+        --accent-color: #ff6b35;
+      }
+      
+      /* Transiciones suaves */
+      * {
+        transition: color 0.3s ease, background-color 0.3s ease;
+      }
+      
+      /* Efecto de brillo en el reloj */
+      .clock-glow {
+        text-shadow: 0 0 20px var(--clock-color), 0 0 40px var(--clock-color);
+      }
+      
+      /* Animación de pulso sutil */
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+      }
+      
+      .pulse-animation {
+        animation: pulse 2s infinite;
+      }
+      
+      /* Scrollbar personalizada */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #1a1a1a;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
       }
     </style>
     <link rel="manifest" href="manifest.json">
   </head>
 
-  <body
-    class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4"
-  >
-    <main class="w-full max-w-4xl mx-auto flex flex-col flex-grow space-y-4">
-      <!-- 1. Sección del Reloj y la Fecha -->
-      <section class="flex-grow bg-gray-800 p-6 rounded-xl shadow-lg text-center flex flex-col justify-center">
-        <div
-          id="time"
-          class="font-orbitron text-7xl md:text-8xl lg:text-9xl font-bold tracking-widest"
-        >
-          00:00:00
-        </div>
-        <div id="date" class="text-xl md:text-2xl text-gray-400 mt-4">
-          cargando fecha...
-        </div>
-      </section>
-
-      <!-- 2. Sección del Clima -->
-      <section
-        id="weather-container"
-        class="bg-gray-800 p-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 text-sm"
-      >
-        <div id="weather-icon" class="text-2xl"></div>
-        <div>
-          <div id="temperature" class="text-lg font-bold">--°C</div>
-          <div id="weather-description" class="text-gray-400">
-            Obteniendo clima...
+  <body class="bg-black text-white min-h-screen font-inter overflow-x-hidden">
+    <!-- Panel de configuración -->
+    <div id="config-panel" class="fixed top-4 right-4 z-50">
+      <button id="config-btn" class="bg-gray-800 hover:bg-gray-700 p-3 rounded-full shadow-lg transition-all duration-300">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </button>
+      
+      <!-- Modal de configuración -->
+      <div id="config-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold">Configuración de Colores</h3>
+            <button id="close-config" class="text-gray-400 hover:text-white">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">Color del Reloj</label>
+              <input type="color" id="clock-color" value="#00ff88" class="w-full h-12 rounded-lg border-0 cursor-pointer">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-2">Color de la Fecha</label>
+              <input type="color" id="date-color" value="#ffffff" class="w-full h-12 rounded-lg border-0 cursor-pointer">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-2">Color del Clima</label>
+              <input type="color" id="weather-color" value="#00d4ff" class="w-full h-12 rounded-lg border-0 cursor-pointer">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-2">Color de Acento</label>
+              <input type="color" id="accent-color" value="#ff6b35" class="w-full h-12 rounded-lg border-0 cursor-pointer">
+            </div>
+          </div>
+          
+          <div class="mt-6 flex space-x-3">
+            <button id="reset-colors" class="flex-1 bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg transition-colors">
+              Restablecer
+            </button>
+            <button id="save-colors" class="flex-1 bg-blue-600 hover:bg-blue-500 py-2 px-4 rounded-lg transition-colors">
+              Guardar
+            </button>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      </main>
+    <!-- Contenido principal -->
+    <main class="min-h-screen flex flex-col items-center justify-center p-4 relative">
+      <!-- Fondo con gradiente sutil -->
+      <div class="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black opacity-100"></div>
+      
+      <!-- Contenido centrado -->
+      <div class="relative z-10 w-full max-w-2xl mx-auto space-y-6">
+        
+        <!-- Sección del Reloj -->
+        <section class="text-center space-y-4">
+          <div id="time" class="font-orbitron text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-wider clock-glow" style="color: var(--clock-color);">
+            00:00:00
+          </div>
+          <div id="date" class="text-lg sm:text-xl md:text-2xl font-light" style="color: var(--date-color);">
+            cargando fecha...
+          </div>
+        </section>
+
+        <!-- Sección del Clima -->
+        <section id="weather-container" class="bg-gray-900/50 backdrop-blur-sm p-6 rounded-2xl shadow-2xl border border-gray-800">
+          <div class="flex items-center justify-center space-x-4">
+            <div id="weather-icon" class="text-4xl sm:text-5xl pulse-animation"></div>
+            <div class="text-center">
+              <div id="temperature" class="text-2xl sm:text-3xl font-bold" style="color: var(--weather-color);">--°C</div>
+              <div id="weather-description" class="text-sm sm:text-base text-gray-300 mt-1">
+                Obteniendo clima...
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Información adicional -->
+        <section class="grid grid-cols-2 gap-4">
+          <div class="bg-gray-900/50 backdrop-blur-sm p-4 rounded-xl border border-gray-800 text-center">
+            <div class="text-sm text-gray-400 mb-1">Hora Local</div>
+            <div id="local-time" class="text-lg font-semibold" style="color: var(--accent-color);">--:--</div>
+          </div>
+          <div class="bg-gray-900/50 backdrop-blur-sm p-4 rounded-xl border border-gray-800 text-center">
+            <div class="text-sm text-gray-400 mb-1">Zona Horaria</div>
+            <div id="timezone" class="text-lg font-semibold" style="color: var(--accent-color);">--</div>
+          </div>
+        </section>
+
+      </div>
+    </main>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
+        // Elementos del DOM
         const timeEl = document.getElementById("time");
         const dateEl = document.getElementById("date");
         const weatherIconEl = document.getElementById("weather-icon");
         const tempEl = document.getElementById("temperature");
         const weatherDescEl = document.getElementById("weather-description");
+        const localTimeEl = document.getElementById("local-time");
+        const timezoneEl = document.getElementById("timezone");
+        
+        // Elementos de configuración
+        const configBtn = document.getElementById("config-btn");
+        const configModal = document.getElementById("config-modal");
+        const closeConfig = document.getElementById("close-config");
+        const clockColorInput = document.getElementById("clock-color");
+        const dateColorInput = document.getElementById("date-color");
+        const weatherColorInput = document.getElementById("weather-color");
+        const accentColorInput = document.getElementById("accent-color");
+        const resetColorsBtn = document.getElementById("reset-colors");
+        const saveColorsBtn = document.getElementById("save-colors");
 
-        // --- 1. FUNCIÓN PARA EL RELOJ Y LA FECHA ---
+        // Cargar colores guardados
+        function loadSavedColors() {
+          const savedColors = JSON.parse(localStorage.getItem('clockColors') || '{}');
+          if (savedColors.clockColor) {
+            document.documentElement.style.setProperty('--clock-color', savedColors.clockColor);
+            clockColorInput.value = savedColors.clockColor;
+          }
+          if (savedColors.dateColor) {
+            document.documentElement.style.setProperty('--date-color', savedColors.dateColor);
+            dateColorInput.value = savedColors.dateColor;
+          }
+          if (savedColors.weatherColor) {
+            document.documentElement.style.setProperty('--weather-color', savedColors.weatherColor);
+            weatherColorInput.value = savedColors.weatherColor;
+          }
+          if (savedColors.accentColor) {
+            document.documentElement.style.setProperty('--accent-color', savedColors.accentColor);
+            accentColorInput.value = savedColors.accentColor;
+          }
+        }
+
+        // Guardar colores
+        function saveColors() {
+          const colors = {
+            clockColor: clockColorInput.value,
+            dateColor: dateColorInput.value,
+            weatherColor: weatherColorInput.value,
+            accentColor: accentColorInput.value
+          };
+          localStorage.setItem('clockColors', JSON.stringify(colors));
+          
+          // Aplicar colores
+          document.documentElement.style.setProperty('--clock-color', colors.clockColor);
+          document.documentElement.style.setProperty('--date-color', colors.dateColor);
+          document.documentElement.style.setProperty('--weather-color', colors.weatherColor);
+          document.documentElement.style.setProperty('--accent-color', colors.accentColor);
+        }
+
+        // Eventos de configuración
+        configBtn.addEventListener('click', () => {
+          configModal.classList.remove('hidden');
+        });
+
+        closeConfig.addEventListener('click', () => {
+          configModal.classList.add('hidden');
+        });
+
+        configModal.addEventListener('click', (e) => {
+          if (e.target === configModal) {
+            configModal.classList.add('hidden');
+          }
+        });
+
+        saveColorsBtn.addEventListener('click', () => {
+          saveColors();
+          configModal.classList.add('hidden');
+        });
+
+        resetColorsBtn.addEventListener('click', () => {
+          clockColorInput.value = '#00ff88';
+          dateColorInput.value = '#ffffff';
+          weatherColorInput.value = '#00d4ff';
+          accentColorInput.value = '#ff6b35';
+          saveColors();
+        });
+
+        // --- FUNCIÓN PARA EL RELOJ Y LA FECHA ---
         function updateTimeAndDate() {
           const now = new Date();
           const hours = String(now.getHours()).padStart(2, "0");
@@ -72,6 +270,14 @@
             day: "numeric",
           };
           dateEl.textContent = now.toLocaleDateString("es-ES", dateOptions);
+          
+          // Hora local y zona horaria
+          localTimeEl.textContent = now.toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          });
+          timezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/').pop() || 'Local';
         }
 
         // --- FUNCIÓN AUXILIAR PARA INTERPRETAR CÓDIGOS DE CLIMA (WMO) ---
@@ -102,7 +308,7 @@
           return weatherMap[code] || { description: "Desconocido", icon: "❓" };
         }
 
-        // --- 2. FUNCIÓN PARA EL CLIMA (USANDO OPEN-METEO) ---
+        // --- FUNCIÓN PARA EL CLIMA (USANDO OPEN-METEO) ---
         async function fetchWeather(latitude, longitude, locationName = null) {
           const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=auto`;
           try {
@@ -116,7 +322,6 @@
 
             weatherIconEl.textContent = weatherInfo.icon;
             tempEl.textContent = `${Math.round(currentTemp)}°C`;
-            // Si se proporciona un nombre de ubicación (como la de por defecto), lo mostramos.
             weatherDescEl.textContent = locationName ? `${weatherInfo.description} en ${locationName}` : weatherInfo.description;
 
           } catch (error) {
@@ -139,14 +344,11 @@
           };
 
           navigator.geolocation.getCurrentPosition(
-            // Éxito al obtener ubicación
             (position) => {
               fetchWeather(position.coords.latitude, position.coords.longitude);
             },
-            // Error al obtener ubicación
             (error) => {
               console.error("Geolocation error:", error);
-              // Mostramos un mensaje y luego el clima de la ubicación por defecto.
               weatherDescEl.textContent = "Usando ubicación por defecto.";
               fetchWeather(defaultLocation.latitude, defaultLocation.longitude, defaultLocation.name);
             },
@@ -155,12 +357,14 @@
         }
 
         // --- INICIALIZACIÓN ---
+        loadSavedColors();
         updateTimeAndDate();
         setInterval(updateTimeAndDate, 1000);
         getWeather();
       });
     </script>
-  <script>
+    
+    <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then(registration => {
